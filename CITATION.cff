@@ -1,0 +1,24 @@
+cff-version: 1.2.0
+message: "If you use this code or these data, please cite the manuscript below."
+type: software
+title: "dta-small-study-effects: code, data and results for 'Small-study effects on the hierarchical summary ROC curve'"
+version: 1.0.0
+date-released: 2026-09-18
+license: MIT
+repository-code: "https://github.com/Kazuki-Nishida/dta-small-study-effects"
+authors:
+  - family-names: Nonomiya
+    given-names: Yuta
+  - family-names: Nishida
+    given-names: Kazuki
+    email: kazuki.nishida1988@gmail.com
+preferred-citation:
+  type: article
+  title: "Small-study effects on the hierarchical summary ROC curve: latent accuracy and threshold trends in meta-analysis of diagnostic test accuracy"
+  authors:
+    - family-names: Nonomiya
+      given-names: Yuta
+    - family-names: Nishida
+      given-names: Kazuki
+  year: 2026
+  notes: "Manuscript; the journal reference will be added on publication."

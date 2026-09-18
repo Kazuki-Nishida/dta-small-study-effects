@@ -1,0 +1,25 @@
+[build-system]
+requires = ["setuptools>=61"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "hsroc"
+version = "1.0.0"
+description = "Small-study effects on the hierarchical summary ROC curve: latent accuracy and threshold trends in meta-analysis of diagnostic test accuracy"
+readme = "README.md"
+requires-python = ">=3.10"
+license = { file = "LICENSE" }
+authors = [
+  { name = "Yuta Nonomiya" },
+  { name = "Kazuki Nishida", email = "kazuki.nishida1988@gmail.com" },
+]
+dependencies = ["numpy>=1.24", "scipy>=1.10", "pandas>=2.0", "matplotlib>=3.7"]
+
+[project.optional-dependencies]
+test = ["pytest>=7"]
+
+[tool.setuptools]
+packages = ["hsroc"]
+
+[tool.pytest.ini_options]
+testpaths = ["tests"]

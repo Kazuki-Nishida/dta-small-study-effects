@@ -1,0 +1,24 @@
+study_id,study,country,period,fit_brand,positivity_threshold,follow_up_of_negatives
+1,Arana-Arri 2017a,Spain (Basque Country),2009-2012,OC-Sensor Micro / FOB-Gold (quantitative),20 ug Hb/g,2 years
+2,Burón 2019,Spain,2010-2013,OC-Sensor (quantitative),20 ug Hb/g,2 years
+3,Castiglione 2007,Italy,2000-2002,OC-Hemodia (quantitative),100 ng/mL (20 ug Hb/g),1-2 years
+4,Chen 2016a,Taiwan,1994-2007,OC-Sensor (quantitative),100 ng/mL (20 ug Hb/g),2 years
+5,Chiang 2014a,Taiwan,2004-2009,OC-Sensor (quantitative),20 ug Hb/g,> 3 years
+6,Chiang 2014b,Taiwan,2004-2009,HM-Jack (quantitative),20 ug Hb/g,> 3 years
+7,Crotta 2012,Italy (Aosta Valley),2001-2003,OC-Sensor (quantitative),100 ng/mL (20 ug Hb/g),2 years
+8,Denters 2012a,Netherlands,2008,FIT arm of a randomised gFOBT/FIT pilot (quantitative),not stated in the characteristics table,2 years
+9,Digby 2016,Scotland,2010-2011,OC-Sensor (quantitative),80 ug Hb/g,2 years
+10,Itoh 1996,Japan,1991-1992,OC-Hemodia (quantitative),50 ng/mL (10 ug Hb/g),2 years
+11,Jensen 2016,USA (California),2007-2013,OC FIT-CHEK (quantitative),20 ug Hb/g,1 year
+12,Juul 2018,Denmark,2014,not stated (quantitative),100 ug Hb/L buffer (20 ug Hb/g),12 months
+13,Kapidzic 2017,Netherlands,2006-2010,OC-Sensor (quantitative),10 ug Hb/g,at least 2 years
+14,Launoy 2005,France,2001-2002,Magstream (quantitative),20 ng/mL (67 ug Hb/g),at least 12 months
+15,Levi 2011b,Israel,not described,OC-Micro (quantitative; FIT arm),70 ng/mL (14 ug Hb/g),2 years
+16,McNamara 2014,Ireland,not described,OC-Sensor (quantitative),100 ng/mL (20 ug Hb/g),2 years
+17,Nakama 1996,Japan,1991,Monohaem (qualitative),not stated,3 years
+18,Parente 2013,Italy (Lecco),2005,HM-Jack (quantitative),100 ng/mL (250 ug Hb/g),at least 2 years
+19,Parra-Blanco 2010,Spain (Tenerife),2004,OC-Light (qualitative),50 ng/mL,2 years
+20,Robinson 1996,England,1991-1992,Hemeselect (qualitative),1:8 dilution,not stated
+21,Sieg 2002,Germany,1994-2000,not stated (luminescence immunoassay),"10 ug/g (1994-1998), 5 ug/g (1998-2000)",1-4 years
+22,Van Roon 2013,Netherlands,2006-2009,OC-Sensor (quantitative),50 ng/mL (10 ug Hb/g),2 years
+23,Zorzi 2018,Italy,2002-2015,OC-Hemodia (quantitative),100 ng/mL (20 ug Hb/g),2 years
