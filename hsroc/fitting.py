@@ -26,9 +26,10 @@ from . import glmm
 BOUNDS6 = [(-30, 30), (-30, 30), (-200, 200), (-4, 3), (-4, 3), (-4, 4)]
 
 
-def fit_fast(TP, FN, FP, TN, x, start):
+def fit_fast(TP, FN, FP, TN, x, start, hessian_step=glmm.HESSIAN_STEP_SIMULATION):
     """The simulation fit: L-BFGS-B from the supplied start (the smoothed-variance normal-
-    approximation fit), numerical Hessian, delta-method Wald tests.  Returns the parameter
+    approximation fit), numerical Hessian (step ``hessian_step``, 1e-4 for the simulation study;
+    see glmm.HESSIAN_STEP_*), delta-method Wald tests.  Returns the parameter
     vector theta, the negative log-likelihood, the fitted shape c_h = lam-hat and the p values
     of the Wald contrasts at c = lam-hat (p_hs, the accuracy coordinate) and c = 1 (p_c1, the
     lnDOR axis on the model)."""
@@ -40,7 +41,7 @@ def fit_fast(TP, FN, FP, TN, x, start):
     start = np.clip(start, [b[0] for b in B], [b[1] for b in B])
     res = minimize(f, start, method="L-BFGS-B", bounds=B, options=dict(maxiter=500, ftol=1e-12, gtol=1e-6))
     th = res.x.copy(); p = 7
-    H = glmm._numerical_hessian(f, th)
+    H = glmm._numerical_hessian(f, th, h=hessian_step)
     try:
         V = np.linalg.inv(H)
     except np.linalg.LinAlgError:

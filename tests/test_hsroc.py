@@ -151,3 +151,18 @@ def test_applications_regression_against_stored_results():
         assert abs(q["gamma_theta"]["est"] - r["gamma_theta"]["est"]) < 1e-6
         assert abs(lr["p_t"] - r["lrt_alpha"]["p_t"]) < 1e-6
         assert abs(slope - r["deeks_slope"]) < 1e-9 and abs(p_deeks - r["p_deeks"]) < 1e-9
+        # Hessian-based quantities: the stored values use glmm.HESSIAN_STEP_APPLICATIONS (the default of glmm.fit)
+        assert abs(q["betaA_1"]["se"] - r["betaA_1"]["se"]) < 1e-6 and abs(q["betaA_1"]["p"] - r["betaA_1"]["p"]) < 1e-6
+        assert abs(q["gamma_alpha"]["se"] - r["gamma_alpha"]["se"]) < 1e-6
+
+
+def test_hessian_step_of_the_applications_is_in_the_stable_range():
+    """For the FIT review the standard error of the lnDOR trend of the binomial fit is the same (to 0.1%) at the
+    application step 1e-3 and at 3e-3, i.e. the step is not in the noise-dominated range (which starts near 1e-4)."""
+    TP, FN, FP, TN, x, o = _fit("FIT")
+    n1 = TP + FN; n0 = FP + TN; const = glmm._binom_const(TP, n1, FP, n0)
+    f = lambda th: glmm.negloglik(th, TP, n1, FP, n0, x, const)
+    c = np.zeros(7); c[1] = 1.0; c[3] = -1.0
+    se = {h: float(np.sqrt(c @ np.linalg.inv(glmm._numerical_hessian(f, o["theta"], h=h)) @ c)) for h in (1e-3, 3e-3)}
+    assert abs(se[1e-3] / se[3e-3] - 1) < 1e-3
+    assert glmm.HESSIAN_STEP_APPLICATIONS == 1e-3 and glmm.HESSIAN_STEP_SIMULATION == 1e-4

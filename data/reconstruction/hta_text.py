@@ -19,20 +19,39 @@ TOL = 0.005 + 1e-9   # printed values are rounded to 2 dp (half-up)
 
 
 def solutions(phat, lo, hi, nmax=4000):
-    """All (x, n) whose phat and exact CI round to the printed values."""
-    sols = []
-    for n in range(1, nmax + 1):
-        base = int(round(phat * n))
-        for x in {base - 1, base, base + 1,
-                  int(np.floor(phat * n)), int(np.ceil(phat * n))}:
-            if not (0 <= x <= n):
-                continue
-            if abs(x / n - phat) > TOL:
-                continue
-            l, h = cp_ci(x, n)
-            if abs(l - lo) <= TOL and abs(h - hi) <= TOL:
-                sols.append((x, n))
-    return sorted(set(sols), key=lambda s: s[1])
+    """All (x, n), n <= nmax, whose proportion and exact interval round to the printed values: every
+    integer x in the band |x/n - phat| <= TOL is examined (for large n several counts share one printed
+    proportion), and the pairs are returned ordered by group size n, then by count x."""
+    n = np.arange(1, nmax + 1)
+    xlo = np.maximum(np.ceil(n * (phat - TOL) - 1e-12).astype(int), 0)
+    xhi = np.minimum(np.floor(n * (phat + TOL) + 1e-12).astype(int), n)
+    keep = xhi >= xlo
+    ns = np.repeat(n[keep], xhi[keep] - xlo[keep] + 1)
+    xs = np.concatenate([np.arange(a, b + 1) for a, b in zip(xlo[keep], xhi[keep])]) if keep.any() else np.array([], int)
+    ok = np.abs(xs / ns - phat) <= TOL
+    xs, ns = xs[ok], ns[ok]
+    with np.errstate(all="ignore"):
+        l = np.where(xs == 0, 0.0, beta.ppf(0.025, np.maximum(xs, 1), ns - xs + 1))
+        h = np.where(xs == ns, 1.0, beta.ppf(0.975, xs + 1, np.maximum(ns - xs, 1)))
+    m = (np.abs(l - lo) <= TOL) & (np.abs(h - hi) <= TOL)
+    return sorted(zip(xs[m].tolist(), ns[m].tolist()), key=lambda s: (s[1], s[0]))
+
+
+KEEP = 12   # candidate (count, size) pairs kept per coordinate: ordered by group size, then by count (see README.md)
+PREV_LO, PREV_HI = 0.02, 0.95   # prevalence band for pairing the sensitivity and specificity candidates
+
+
+def pair_candidates(s_se, s_sp, keep=KEEP):
+    """Pair the truncated candidate sets under the prevalence band (all pairs if none qualifies)."""
+    s_se, s_sp = s_se[:keep], s_sp[:keep]
+    pairs = [(a, b) for a in s_se for b in s_sp if PREV_LO <= a[1] / (a[1] + b[1]) <= PREV_HI]
+    return pairs or [(a, b) for a in s_se for b in s_sp]
+
+
+def endpoints(pairs):
+    """Minimum-count and maximum-count pairs (total group size; ties by the sensitivity group size)."""
+    key = lambda p: (p[0][1] + p[1][1], p[0][1])
+    return min(pairs, key=key), max(pairs, key=key)
 
 
 def load_years(raw="hta1015_raw.txt"):

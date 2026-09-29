@@ -78,7 +78,7 @@ def fit_full_record(TP, FN, FP, TN, x, start):
     start = np.clip(start, lo, hi)
     res = minimize(f, start, method="L-BFGS-B", bounds=B, options=dict(maxiter=500, ftol=1e-12, gtol=1e-6))
     th = res.x.copy(); p = 7
-    H = glmm._numerical_hessian(f, th)
+    H = glmm._numerical_hessian(f, th, h=glmm.HESSIAN_STEP_SIMULATION)   # 1e-4: the step of the stored results
     hess_ok = True
     try:
         V = np.linalg.inv(H)

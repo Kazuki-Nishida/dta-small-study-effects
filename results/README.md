@@ -2,7 +2,9 @@
 
 All files are written by the scripts in `analysis/`. Every random stream is
 `numpy.random.default_rng` with the seed recorded in `analysis/simulation_settings.csv` and in
-the result files, so every number is reproduced exactly by re-running.
+the result files, so every number is reproduced exactly by re-running. Standard errors use the
+central-difference Hessian step recorded in `README.md` (1e-3 for the reviews, 1e-4 for the simulation
+study and the parametric check).
 
 | File | Script | Used for |
 |---|---|---|

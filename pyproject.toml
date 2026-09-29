@@ -4,7 +4,7 @@ build-backend = "setuptools.build_meta"
 
 [project]
 name = "hsroc"
-version = "1.0.0"
+version = "1.0.1"
 description = "Small-study effects on the hierarchical summary ROC curve: latent accuracy and threshold trends in meta-analysis of diagnostic test accuracy"
 readme = "README.md"
 requires-python = ">=3.10"

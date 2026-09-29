@@ -32,18 +32,24 @@ summary of these studies and the primary reports are the authoritative sources.
 The HTA monograph reports each cohort's sensitivity and specificity as a proportion rounded
 to two decimals with an exact (Clopper-Pearson) 95% interval, but not the group sizes.
 `reconstruction/extract_ipg.py` parses those figures from the text of the monograph and, for
-every printed `(p, lower, upper)`, enumerates the integer pairs `(x, n)` whose proportion and
-interval both reproduce the printed values (tolerance `|x/n - p| <= 0.005 + 1e-9`, robust to
-half-up versus banker's rounding; endpoints matched at the printed precision). When several
-pairs remain admissible, the two extreme reconstructions, minimum count and maximum count, are
-carried through the whole analysis. For a few high-accuracy cohorts the printed precision hardly
-bounds the sample size (a proportion of 0.97 with interval 0.95 to 0.99 is reproduced by sizes
-into the thousands); the candidate set of each coordinate is therefore truncated to its twelve
-smallest admissible sizes before the extremes are taken, so the "maximum" endpoint is the
-largest count among plausible sizes rather than an unbounded one. `derive_ipg_max.py` builds the
-IPG maximum-count endpoint by that rule from `ipg_min.csv` (it re-enumerates the candidate sets
-from the printed values implied by the minimum-count table, so it needs no source text); 30 of
-the 42 cohorts have more than one admissible pair. Publication years (`year_pub`) were taken
+every printed `(p, lower, upper)`, enumerates all integer pairs `(x, n)` with `n <= 4000` whose
+proportion and interval both reproduce the printed values (every `x` with `|x/n - p| <= 0.005 + 1e-9`,
+robust to half-up versus banker's rounding; the exact Clopper-Pearson limits matched to the printed
+values with the same tolerance). The integer tables compatible with a printed triple are not
+unique: for the high-accuracy cohorts the admissible group sizes extend to several hundred (a
+proportion of 0.97 with interval 0.95 to 0.99 is reproduced by 331 pairs with group sizes from 234
+to 517; the largest admissible group size over the 84 coordinates is 606). As an analysis choice,
+the candidate pairs of each coordinate are ordered by group size, then by count, and the first
+twelve are kept (`hta_text.KEEP`); this truncation is binding for 4 sensitivity and 11 specificity
+coordinates. The sensitivity and specificity candidates are then paired under a prevalence between
+0.02 and 0.95 (all pairs if none qualifies), and the pairs with the smallest and the largest total
+group size (ties by the sensitivity group size) are the two reconstructions carried through the
+whole analysis, `ipg_min.csv` and `ipg_max.csv`; 30 of the 42 cohorts admit more than one pair.
+`derive_ipg_max.py` rebuilds the maximum-count endpoint by the same rule from `ipg_min.csv` (it
+re-enumerates the candidate sets from the printed values implied by the minimum-count table, so it
+needs no source text); the rule is shared by the two scripts through `hta_text.pair_candidates` and
+`hta_text.endpoints`. The two reconstructions are the extremes within the truncated candidate sets,
+not over every table compatible with the printed values. Publication years (`year_pub`) were taken
 from the source review's reference list.
 
 To re-run the extraction, obtain the monograph (open access, doi:10.3310/hta10150), convert it

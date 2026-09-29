@@ -1,12 +1,13 @@
 #!/usr/bin/env python3
 """Extract the IPG (symptomatic DVT) meta-analysis from Goodacre et al., HTA 2006;10(15):
 Figures 69 (Se) / 70 (Sp), k = 42; years from the reference list; 2 x 2 tables by
-Clopper-Pearson inversion; the minimum-count and maximum-count data sets (ipg_min.csv, ipg_max.csv).
+Clopper-Pearson inversion; the minimum-count and maximum-count data sets (ipg_min.csv, ipg_max.csv), the
+maximum within the twelve smallest (count, size) pairs of each coordinate, as in derive_ipg_max.py.
 Input: hta1015.txt and hta1015_raw.txt (see README.md); not distributed."""
 import re
 import numpy as np
 import pandas as pd
-from hta_text import solutions, load_years, cp_ci
+from hta_text import solutions, load_years, cp_ci, pair_candidates, endpoints
 
 TXT = "hta1015.txt"
 ROW = re.compile(r"^\s*(.+?)(\d{2,3})\s+([01][.,]\d{2})\s+\(([01][.,]\d{2}) to ([01][.,]\d{2})\)")
@@ -47,12 +48,8 @@ def main():
             problems.append((se["author"], se["ref"], se if not s_se else sp, len(s_se), len(s_sp)))
             continue
         y = years.get(se["ref"], [None])[0]
-        pairs = [(a, b) for a in s_se for b in s_sp
-                 if 0.02 <= a[1] / (a[1] + b[1]) <= 0.95]
-        if not pairs:
-            pairs = [(a, b) for a in s_se for b in s_sp]
-        pmin = min(pairs, key=lambda p: p[0][1] + p[1][1])
-        pmax = max(pairs, key=lambda p: p[0][1] + p[1][1])
+        pairs = pair_candidates(s_se, s_sp)      # twelve smallest pairs per coordinate, prevalence band
+        pmin, pmax = endpoints(pairs)
         for pick, rows in ((pmin, rows_min), (pmax, rows_max)):
             (tp, n1), (tn, n0) = pick
             rows.append(dict(cohort_id=i + 1, author=se["author"], ref=se["ref"],

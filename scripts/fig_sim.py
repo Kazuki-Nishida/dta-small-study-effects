@@ -33,9 +33,9 @@ LAMS = [(0.25, "0.25", "1/4"), (0.5, "0.5", "1/2"), (2 ** -0.5, "0.71", r"$1/\sq
 STRENGTHS = [0.0, 0.2, 0.4, 0.6, 0.8, 1.0, 1.2, 1.4, 1.6]
 # (procedure, label, colour, marker, line style): the two lnDOR-axis procedures share a hue (the estimator differs),
 # the proposed test is the accuracy axis on the same likelihood as the second
-PROCS = [("deeks", "Deeks", BLUE, "^", "-"),
-         ("c1", "lnDOR trend of the binomial fit", BLUE, "v", "--"),
-         ("hsLt", "proposed latent accuracy test", ORANGE, "o", "-")]
+PROCS = [("deeks", "Deeks test", BLUE, "^", "-"),
+         ("c1", "Binomial-fit lnDOR test", BLUE, "v", "--"),
+         ("hsLt", "Proposed latent-accuracy LR test", ORANGE, "o", "-")]
 
 
 def rate(cell, proc):
@@ -98,13 +98,14 @@ def two_panel(name, panels):
     axes[0].set_ylabel("rejection rate at nominal level 0.10")
     handles, labels = axes[0].get_legend_handles_labels()
     fig.legend(handles, labels, frameon=False, fontsize=7.8, loc="lower center", ncol=3, handlelength=2.6, columnspacing=1.6, bbox_to_anchor=(0.5, 0.01))
+    os.makedirs(os.path.join(HERE, "..", "figures"), exist_ok=True)
     fig.savefig(os.path.join(HERE, "..", "figures", f"{name}.pdf")); fig.savefig(os.path.join(HERE, "..", "figures", f"{name}.png"), dpi=180)
     plt.close(fig)
 
 
 SHAPE_LABEL = "shape of the summary curve, $\\lambda$  (1 = symmetric)"
 two_panel("fig_sim_null", [(lambda proc: series_shape(0.4, 0.0, proc), "(a) Shape $\\lambda$ under a threshold trend of 0.4", SHAPE_LABEL, True),
-                           (series_thresh, "(b) Strength of the threshold trend at $\\lambda = 1/2$", "threshold-trend strength (residual SDs per SD of size)", False)])
+                           (series_thresh, "(b) Strength of the threshold trend at $\\lambda = 1/2$", "threshold-trend strength (residual SDs per SD of $s_i$)", False)])
 two_panel("fig_sim_power", [(lambda proc: series_shape(0.0, 0.5, proc), "(a) Shape $\\lambda$ under the accuracy trend alone", SHAPE_LABEL, True),
                             (lambda proc: series_shape(0.4, 0.5, proc), "(b) Shape $\\lambda$ under both trends", SHAPE_LABEL, True)])
 n = sum(len(getter("hsLt")[0]) for getter in (lambda p: series_shape(0.4, 0.0, p), lambda p: series_shape(0.0, 0.5, p), lambda p: series_shape(0.4, 0.5, p), series_thresh))

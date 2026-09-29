@@ -29,7 +29,7 @@ def analyse(tp, fn, fp, tn, x, ess, k):
     a = normal.analyse(tp, fn, fp, tn, "smoothed"); f = a["fit"]
     start = np.array([f["beta"][0], f["beta"][1], f["beta"][2], f["beta"][3],
                       np.log(f["sig_e"]), np.log(f["sig_f"]), np.arctanh(np.clip(f["rho"], -0.95, 0.95))])
-    g = fitting.fit_fast(tp, fn, fp, tn, x, start)
+    g = fitting.fit_fast(tp, fn, fp, tn, x, start, hessian_step=glmm.HESSIAN_STEP_SIMULATION)   # as in the simulation study
     nul = fitting.fit_null(tp, fn, fp, tn, x, g["theta"], "alpha"); lr = fitting.lrt(g["nll"], nul["nll"], k=k)
     th = g["theta"]; lam = float(np.exp(th[4] - th[5])); rho = float(np.tanh(th[6]))
     ga = lam ** -0.5 * th[1] - lam ** 0.5 * th[3]; gt = 0.5 * (lam ** -0.5 * th[1] + lam ** 0.5 * th[3])

@@ -96,7 +96,19 @@ def negloglik(theta, TP, n1, FP, n0, x, const, newton_iter=40):
     return -np.sum(li + const)
 
 
-def _numerical_hessian(f, th, h=1e-4):
+# Step of the central-difference Hessian.  The objective carries numerical noise of order 1e-11 (the
+# per-study mode search stops at 1e-8), which enters the second differences as noise / (4 h^2).  For the
+# simulated designs (k = 10 to 50, median size 300) a step of 1e-4 is in the stable range; the stored
+# simulation results were computed with it and are reproduced with it.  For the applications the step is
+# 1e-3: in the FIT review (residual correlation 0.98, group sizes up to 7.5e5) a step of 1e-4 is at the edge
+# of the noise-dominated range (the standard error of the lnDOR trend moves by 0.4%), whereas 1e-3 to 1e-2
+# agree to four significant digits.
+HESSIAN_STEP_APPLICATIONS = 1e-3
+HESSIAN_STEP_SIMULATION = 1e-4
+
+
+def _numerical_hessian(f, th, h=HESSIAN_STEP_SIMULATION):
+    """Four-point central-difference Hessian with step h (see the note on HESSIAN_STEP_* above)."""
     p = len(th); H = np.zeros((p, p))
     for i in range(p):
         for j in range(i, p):
@@ -112,11 +124,11 @@ def default_start(TP, FN, FP, TN):
                      np.arctanh(np.clip(np.corrcoef(eta, phi)[0, 1], -0.9, 0.9))])
 
 
-def fit(TP, FN, FP, TN, x, start=None):
+def fit(TP, FN, FP, TN, x, start=None, hessian_step=HESSIAN_STEP_APPLICATIONS):
     """Full maximum-likelihood fit: L-BFGS-B followed by a Nelder-Mead polish, numerical
-    Hessian for the observed information.  Used for the applications.  Returns theta, its
-    covariance V, the negative log-likelihood and the parameter estimates on their natural
-    scales."""
+    Hessian (step ``hessian_step``, 1e-3 for the applications) for the observed information.
+    Used for the applications.  Returns theta, its covariance V, the negative log-likelihood
+    and the parameter estimates on their natural scales."""
     TP, FN, FP, TN = (np.asarray(v, float) for v in (TP, FN, FP, TN))
     n1 = TP + FN; n0 = FP + TN
     const = _binom_const(TP, n1, FP, n0)
@@ -130,7 +142,7 @@ def fit(TP, FN, FP, TN, x, start=None):
     th = res2.x if res2.fun < res.fun else res.x
     th[4:6] = np.clip(th[4:6], -4, 3); th[6] = np.clip(th[6], -4, 4)
     f0 = f(th)
-    H = _numerical_hessian(f, th)
+    H = _numerical_hessian(f, th, h=hessian_step)
     try:
         V = np.linalg.inv(H)
     except np.linalg.LinAlgError:

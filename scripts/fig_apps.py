@@ -50,7 +50,7 @@ for j, (name, key, csv) in enumerate(CASES):
         (y, b[0] + b[1] * xs, BLUE, "empirical lnDOR",
          f"Deeks: ${b[1]:+.1f}$ (SE {se_b:.1f}), $p {fmt_p(r['p_deeks'])}$",
          (mu_e - mu_f) + c1["est"] * (xs - xbar),
-         f"lnDOR fit: ${c1['est']:+.1f}$ (SE {c1['se']:.1f}), $p {fmt_p(c1['p'])}$"),
+         f"Fitted lnDOR trend: ${c1['est']:+.1f}$ (SE {c1['se']:.1f}),\n$p {fmt_p(c1['p'])}$"),
         (eta - lam * (phi - mu_f), mu_e + r["betaA_H"]["est"] * (xs - xbar), ORANGE,
          "logit sensitivity at the summary FPR",
          f"Proposed: $\\hat\\gamma_\\alpha = {r['gamma_alpha']['est']:+.1f}$ (SE {r['gamma_alpha']['se']:.1f}),\nLR $p {fmt_p(r['lrt_alpha']['p_t'])}$", None, None),
@@ -65,19 +65,21 @@ for j, (name, key, csv) in enumerate(CASES):
                   handlelength=1.4, handletextpad=0.45, borderpad=0.35, labelspacing=0.3, borderaxespad=0.2).set_zorder(6)
         ax.set_xlim(0, s.max() * 1.1)
         lo, hi = yy.min(), yy.max(); pad = 0.12 * (hi - lo)
-        ax.set_ylim(lo - (3.4 if line2 is not None else 2.5) * pad, hi + pad)
+        ax.set_ylim(lo - (4.8 if line2 is not None else 2.5) * pad, hi + pad)   # room for the legend below the points
         ax.set_ylabel(ylab, fontsize=9)
         ax.grid(color=GRID, lw=0.5); ax.set_axisbelow(True)
-        if i == 1:
-            ax.set_xlabel("$1/\\sqrt{\\mathrm{ESS}}$  (smaller studies to the right)", fontsize=9)
     # column header: the review, its size and its fitted shape
     pos = axes[0, j].get_position()
     fig.text((pos.x0 + pos.x1) / 2, 0.965, name, ha="center", va="top", fontsize=10.5, color=INK, fontweight="bold")
-    fig.text((pos.x0 + pos.x1) / 2, 0.918, f"$k = {r['k']}$ {'entries' if key == 'FIT' else 'studies'}; fitted shape $\\hat\\lambda = {lam:.2f}$\n"
+    fig.text((pos.x0 + pos.x1) / 2, 0.918, f"$k = {r['k']}$ {'entries' if key == 'FIT' else 'cohorts'}; fitted shape $\\hat\\lambda = {lam:.2f}$\n"
              + ("(asymmetric curve)" if abs(lam - 1) > 0.1 else "(nearly symmetric curve)"), ha="center", va="top", fontsize=8.6, color=INK2, linespacing=1.3)
+# shared horizontal axis label (both columns use the same axis)
+fig.text((axes[1, 0].get_position().x0 + axes[1, 1].get_position().x1) / 2, 0.022,
+         "$1/\\sqrt{\\mathrm{ESS}}$  (smaller effective sample sizes to the right)", ha="center", va="bottom", fontsize=9.5, color=INK2)
 # row labels: the method
 for i, (lab, col) in enumerate((("lnDOR axis:\nDeeks funnel", BLUE), ("Accuracy axis:\naccuracy coordinate", ORANGE))):
     pos = axes[i, 0].get_position()
     fig.text(0.018, (pos.y0 + pos.y1) / 2, lab, ha="left", va="center", fontsize=9.5, color=col, fontweight="bold", rotation=90)
+os.makedirs(os.path.join(HERE, "..", "figures"), exist_ok=True)
 fig.savefig(os.path.join(HERE, "..", "figures", "fig_apps.pdf")); fig.savefig(os.path.join(HERE, "..", "figures", "fig_apps.png"), dpi=200)
 print("fig_apps written")

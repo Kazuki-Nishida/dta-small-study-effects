@@ -66,6 +66,18 @@ values are reproduced exactly as well; with other versions the optimizer may sto
 different points, so fitted values can differ beyond the fourth significant digit and an
 occasional rejection decision near the 0.10 boundary can change.
 
+Standard errors come from a central-difference Hessian of the marginal log-likelihood
+(`hsroc/glmm.py`). The step is 1e-3 for the two reviews (`glmm.HESSIAN_STEP_APPLICATIONS`, used by
+`analysis/applications.py`, `applications_loo.py` and `fitted_parameters.py`) and 1e-4 for the
+simulation study and the parametric check (`glmm.HESSIAN_STEP_SIMULATION`, used by
+`analysis/simulate.py` and `fit_level_checks.py`), the step with which the stored simulation results
+were computed. In four simulation settings re-analysed from the stored replicates (4,000 replicates
+in all), the two steps gave the same decision at the 0.10 level in every replicate. In the FIT
+review, whose fit has a residual correlation of 0.98 and group sizes up to 7.5e5, a step of 1e-4 is
+at the edge of the range in which numerical noise enters the second differences (the standard error
+of the lnDOR trend of the binomial fit moves by 0.4%), whereas steps from 1e-3 to 1e-2 agree to four
+significant digits; the review results therefore use 1e-3.
+
 ## Analysing a review
 
 ```python
