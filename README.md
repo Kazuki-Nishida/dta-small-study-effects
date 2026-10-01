@@ -3,7 +3,8 @@
 Code, data and results for
 
 > Nonomiya Y, Nishida K. *Small-study effects on the hierarchical summary ROC curve: latent
-> accuracy and threshold trends in meta-analysis of diagnostic test accuracy.* Manuscript, 2026.
+> accuracy and threshold trends in meta-analysis of diagnostic test accuracy.* arXiv preprint
+> arXiv:2609.38297 [stat.ME], 2026. https://arxiv.org/abs/2609.38297
 
 In meta-analysis of diagnostic test accuracy, the Deeks test assesses small-study effects
 through the log diagnostic odds ratio (lnDOR). Under the hierarchical summary ROC (HSROC) model
@@ -170,4 +171,5 @@ maximum count) carried through the analysis.
 The code is released under the MIT License (see `LICENSE`). The data files reproduce published
 study-level counts and are provided for reproducibility; please cite the original reviews
 (Grobbee et al. 2022; Goodacre et al. 2006) when using them. To cite this repository, see
-`CITATION.cff`; the journal reference of the manuscript will be added on publication.
+`CITATION.cff` (preprint: arXiv:2609.38297); the journal reference of the manuscript will be added
+on publication.

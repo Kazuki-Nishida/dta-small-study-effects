@@ -21,4 +21,9 @@ preferred-citation:
     - family-names: Nishida
       given-names: Kazuki
   year: 2026
-  notes: "Manuscript; the journal reference will be added on publication."
+  identifiers:
+    - type: other
+      value: "arXiv:2609.38297"
+      description: "arXiv preprint (stat.ME)"
+  url: "https://arxiv.org/abs/2609.38297"
+  notes: "Preprint; the journal reference will be added on publication."
