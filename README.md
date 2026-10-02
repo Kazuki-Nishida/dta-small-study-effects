@@ -68,10 +68,16 @@ the 80 simulation settings with NumPy 2.2.6 and SciPy 1.15.3; each setting's sum
 versions used), single-threaded (`OPENBLAS_NUM_THREADS=1`, set by the scripts). All random
 streams are `numpy.random.default_rng` with the seeds recorded in `analysis/simulation_settings.csv`
 and in the result files, and the fits consume no random numbers, so every simulated data set is
-regenerated exactly from its seed. With the recorded library versions the fitted values and p
-values are reproduced exactly as well; with other versions the optimizer may stop at slightly
-different points, so fitted values can differ beyond the fourth significant digit and an
-occasional rejection decision near the 0.10 boundary can change.
+regenerated exactly from its seed. With the recorded library versions, on the machine that produced
+them, the fitted values and p values are reproduced exactly as well (`HSROC_STRICT=1 pytest -q`
+asserts this). On other hardware, or with other library versions, the optimizers stop at slightly
+different points: on GitHub's Ubuntu runners with the pinned versions (`requirements-lock.txt`)
+the latent accuracy trend of the FIT review differs from the stored value by 4e-6 and
+replicate-level simulation p values by up to about 1e-4, so fitted values can differ beyond the
+fourth significant digit and an occasional rejection decision near the 0.10 boundary can change.
+The default test suite therefore compares fitted quantities at that optimizer tolerance (1e-4 for
+estimates, 1e-3 for p values), while the regenerated data sets and the stored rejection counts are
+checked exactly on every platform.
 
 Standard errors come from a central-difference Hessian of the marginal log-likelihood
 (`hsroc/glmm.py`). The step is 1e-3 for the two reviews (`glmm.HESSIAN_STEP_APPLICATIONS`, used by
@@ -179,7 +185,9 @@ maximum count) carried through the analysis.
 pytest configuration, a clearer error when the data directory is missing, the missing
 `results/simulation_summary.csv`, docstrings, and a standard error that is now `NaN` with a
 warning rather than silently floored when a Hessian is not positive definite). No result file,
-data file or figure changed between the two.
+data file or figure changed between the two. The commit after `v1.0.2` makes the regression tests
+pass on other hardware (optimizer-tolerance comparisons by default, `HSROC_STRICT=1` for exact
+reproduction) and states the reproducibility claim accordingly; nothing else changed.
 
 ## License and citation
 

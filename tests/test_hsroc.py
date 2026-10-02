@@ -1,7 +1,15 @@
 """Smoke and regression tests.  Run with `pytest -q` (under a minute: the regression tests refit both reviews, re-analyse
-stored simulation replicates and check every stored rejection count against its replicate records)."""
+stored simulation replicates and check every stored rejection count against its replicate records).
+
+Two tolerances.  Data regeneration from the seeds and the stored rejection counts are checked exactly on every
+platform.  Fitted values and p values are compared at optimizer tolerance by default (the L-BFGS-B / Nelder-Mead
+optimizers stop at slightly different points on different hardware even with identical library versions: on
+GitHub's Ubuntu runners the latent accuracy trend of the FIT review differs from the stored value by 4e-6 and
+simulation p values by up to about 1e-4).  `HSROC_STRICT=1 pytest -q` asserts exact reproduction, which holds on the
+machine and with the library versions that produced results/ (see README.md and requirements-lock.txt)."""
 import glob
 import json
+import os
 import sys
 from pathlib import Path
 
@@ -13,6 +21,11 @@ from hsroc import data, design, fitting, funnel, glmm, normal
 
 ROOT = Path(__file__).resolve().parents[1]
 sys.path.insert(0, str(ROOT / "analysis"))
+
+STRICT = os.environ.get("HSROC_STRICT", "") not in ("", "0")
+TOL_EST = 1e-6 if STRICT else 1e-4      # fitted quantities (shape, latent trends, standard errors)
+TOL_P = 1e-6 if STRICT else 1e-3        # p values of the likelihood fits
+TOL_P_SIM = 1e-9 if STRICT else 1e-3    # replicate-level p values of the simulation fit
 
 
 def _fit(key):
@@ -110,8 +123,9 @@ def test_simulation_replicates_reproduce_the_stored_p_values():
         TP, FN, FP, TN = design.gen_H(k, lam, float(man["rho"]), float(man["rho_s"]), float(man["delta"]), rng, design.MU_E, design.MU_F)
         assert np.array_equal(TP, z["TP"][r]) and np.array_equal(FP, z["FP"][r])
         rec = S.analyse_replicate(TP, FN, FP, TN, k)
-        for name in ("p_deeks", "p_c1", "p_hsW", "p_hsL", "p_hsLt"):
-            assert abs(rec[name] - float(z[name][r])) < 1e-9, (name, r)
+        assert abs(rec["p_deeks"] - float(z["p_deeks"][r])) < 1e-9, r      # closed form, no optimizer
+        for name in ("p_c1", "p_hsW", "p_hsL", "p_hsLt"):
+            assert abs(rec[name] - float(z[name][r])) < TOL_P_SIM, (name, r)
 
 
 def test_stored_rates_are_consistent_with_the_replicate_records():
@@ -150,14 +164,14 @@ def test_applications_regression_against_stored_results():
         slope, p_deeks = funnel.deeks_test(eta - phi, data.ess(TP, FN, FP, TN))
         r = stored[key]
         assert r["k"] == k
-        assert abs(q["lam"] - r["lam"]) < 1e-6
-        assert abs(q["gamma_alpha"]["est"] - r["gamma_alpha"]["est"]) < 1e-6
-        assert abs(q["gamma_theta"]["est"] - r["gamma_theta"]["est"]) < 1e-6
-        assert abs(lr["p_t"] - r["lrt_alpha"]["p_t"]) < 1e-6
-        assert abs(slope - r["deeks_slope"]) < 1e-9 and abs(p_deeks - r["p_deeks"]) < 1e-9
+        assert abs(q["lam"] - r["lam"]) < TOL_EST
+        assert abs(q["gamma_alpha"]["est"] - r["gamma_alpha"]["est"]) < TOL_EST
+        assert abs(q["gamma_theta"]["est"] - r["gamma_theta"]["est"]) < TOL_EST
+        assert abs(lr["p_t"] - r["lrt_alpha"]["p_t"]) < TOL_P
+        assert abs(slope - r["deeks_slope"]) < 1e-9 and abs(p_deeks - r["p_deeks"]) < 1e-9   # closed form, no optimizer
         # Hessian-based quantities: the stored values use glmm.HESSIAN_STEP_APPLICATIONS (the default of glmm.fit)
-        assert abs(q["betaA_1"]["se"] - r["betaA_1"]["se"]) < 1e-6 and abs(q["betaA_1"]["p"] - r["betaA_1"]["p"]) < 1e-6
-        assert abs(q["gamma_alpha"]["se"] - r["gamma_alpha"]["se"]) < 1e-6
+        assert abs(q["betaA_1"]["se"] - r["betaA_1"]["se"]) < TOL_EST and abs(q["betaA_1"]["p"] - r["betaA_1"]["p"]) < TOL_P
+        assert abs(q["gamma_alpha"]["se"] - r["gamma_alpha"]["se"]) < TOL_EST
 
 
 def test_hessian_step_of_the_applications_is_in_the_stable_range():
