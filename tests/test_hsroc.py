@@ -101,7 +101,8 @@ def test_simulation_replicates_reproduce_the_stored_p_values():
     path = ROOT / "results" / "simulation" / f"{cell}.npz"
     if not path.exists():
         pytest.skip(f"results/simulation/{cell}.npz not present")
-    z = np.load(path, allow_pickle=True)
+    with np.load(path, allow_pickle=True) as zf:
+        z = {name: zf[name] for name in zf.files}
     man = pd.read_csv(ROOT / "analysis" / "simulation_settings.csv", dtype={"lam_tag": str}).set_index("cell").loc[cell]
     k, lam = int(man["k"]), S.LAM_TAGS[str(man["lam_tag"])]
     rng = np.random.default_rng(int(man["seed"]))
@@ -121,8 +122,10 @@ def test_stored_rates_are_consistent_with_the_replicate_records():
         pytest.skip("results/simulation not present")
     import simulate as S
     for f in files:
-        j = json.load(open(f)); z = np.load(f[:-5] + ".npz", allow_pickle=True)
-        recs = pd.DataFrame({c: z[c] for c in S.FAILED if c in z.files})
+        with open(f) as fh:
+            j = json.load(fh)
+        with np.load(f[:-5] + ".npz", allow_pickle=True) as z:
+            recs = pd.DataFrame({c: z[c] for c in S.FAILED if c in z.files})
         valid = pd.DataFrame([S.valid_flags(r) for r in recs.to_dict("records")])
         for m, pcol in (("deeks", "p_deeks"), ("c1", "p_c1"), ("hsW", "p_hsW"), ("hsL", "p_hsL"), ("hsLt", "p_hsLt")):
             p = recs[pcol].values.astype(float); v = valid[m].values
@@ -135,7 +138,8 @@ def test_applications_regression_against_stored_results():
     path = ROOT / "results" / "applications.json"
     if not path.exists():
         pytest.skip("results/applications.json not present")
-    stored = json.load(open(path))
+    with open(path) as fh:
+        stored = json.load(fh)
     for key in ("FIT", "IPG"):
         TP, FN, FP, TN, x, o = _fit(key)
         k = len(TP)
@@ -166,3 +170,19 @@ def test_hessian_step_of_the_applications_is_in_the_stable_range():
     se = {h: float(np.sqrt(c @ np.linalg.inv(glmm._numerical_hessian(f, o["theta"], h=h)) @ c)) for h in (1e-3, 3e-3)}
     assert abs(se[1e-3] / se[3e-3] - 1) < 1e-3
     assert glmm.HESSIAN_STEP_APPLICATIONS == 1e-3 and glmm.HESSIAN_STEP_SIMULATION == 1e-4
+
+
+def test_delta_method_quantities_are_nan_not_floored_when_the_covariance_is_not_positive_definite():
+    """A covariance matrix that is not positive definite (here the negated covariance of the FIT fit, so every
+    delta-method variance is negative) gives NaN standard errors, p values and intervals with a RuntimeWarning,
+    rather than a floored standard error and a spuriously small p value."""
+    TP, FN, FP, TN, x, o = _fit("FIT")
+    k = len(TP)
+    with pytest.warns(RuntimeWarning, match="non-positive or non-finite"):
+        q = fitting.hsroc_quantities(o["theta"], -o["V"], k)
+    for name in ("gamma_alpha", "gamma_theta", "betaA_H", "betaA_1", "shape"):
+        assert np.isnan(q[name]["se"]) and np.isnan(q[name]["p"]) and all(np.isnan(v) for v in q[name]["ci"])
+        assert np.isfinite(q[name]["est"])
+    assert np.isnan(q["lam_se"]) and np.isfinite(q["lam"])
+    # the fitted FIT review itself has a positive-definite Hessian and finite standard errors
+    assert o["hess_pd"] and np.isfinite(fitting.hsroc_quantities(o["theta"], o["V"], k)["gamma_alpha"]["se"])

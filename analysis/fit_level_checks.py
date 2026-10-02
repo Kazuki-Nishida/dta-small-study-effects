@@ -3,8 +3,10 @@
 
 Counts are generated with the observed group sizes of the 23 entries from the accuracy-null constrained fit
 (gamma_alpha = 0, with gamma_theta, the shape, the standard deviations and the correlation at their estimates under
-the constraint), and every replicate is analysed exactly as the review was: all seven parameters re-estimated in the
-full and in the accuracy-constrained model, the threshold trend free in both.  Under this generating point the Deeks
+the constraint), and every replicate is analysed with the model of the review: all seven parameters re-estimated in
+the full and in the accuracy-constrained model, the threshold trend free in both.  The fits are those of the
+simulation study (hsroc.fitting.fit_fast: L-BFGS-B from the normal-approximation start without the Nelder-Mead polish,
+Hessian step 1e-4), not the slower fit used for the review itself (hsroc.glmm.fit, Hessian step 1e-3; see README.md).  Under this generating point the Deeks
 null is false (beta_lnDOR = lambda^{-1/2}(lambda - 1) gamma_theta), so the Deeks rejection rate here is a false-alarm
 rate for the accuracy question, not a level.  Reported: rejection rates at 0.10 and 0.05 of the likelihood-ratio test
 (t and chi-square references), of the Wald contrasts of the accuracy coordinate and of the lnDOR trend of the fit, and
@@ -81,7 +83,8 @@ def main(R=2000):
         for a in (0.10, 0.05):
             p = rate(col, a); res[f"rej_{col}_{a:.2f}"] = p; res[f"se_{col}_{a:.2f}"] = float(np.sqrt(p * (1 - p) / n))
     res["seconds"] = round(time.time() - t0); out[DESIGN] = res
-    json.dump(out, open(os.path.join(ROOT, "results", "fit_level_checks.json"), "w"), indent=1)
+    with open(os.path.join(ROOT, "results", "fit_level_checks.json"), "w") as fh:
+        json.dump(out, fh, indent=1)
     print(f"RESULT {DESIGN}: n={n} failed={failed} nonconv={res['nonconverged']} boundary_rho={res['boundary_rho']} | at 0.10: LRT_t {res['rej_p_lrt_t_0.10']:.3f} "
           f"chi2 {res['rej_p_lrt_chi2_0.10']:.3f} Wald_acc {res['rej_p_wald_acc_0.10']:.3f} c1 {res['rej_p_c1_0.10']:.3f} Deeks {res['rej_p_deeks_0.10']:.3f} "
           f"| Deeks slope sd {res['deeks_slope_sd']:.2f} vs mean WLS se {res['deeks_se_mean']:.2f}; median lam {res['median_lam']:.2f} rho {res['median_rho']:.3f} [{res['seconds']}s]", flush=True)

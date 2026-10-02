@@ -15,9 +15,7 @@ table.
 Usage: python derive_ipg_max.py   (writes ../ipg_max.csv; about one minute)
 """
 import itertools
-import numpy as np
 import pandas as pd
-from scipy.stats import beta
 from hta_text import solutions, cp_ci, pair_candidates, endpoints, KEEP
 
 TOL = 0.005 + 1e-9

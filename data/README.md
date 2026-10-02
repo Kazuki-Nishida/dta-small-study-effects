@@ -1,7 +1,9 @@
 # Study-level data of the two re-analysed reviews
 
 Each file holds one 2 x 2 table per primary study (`TP`, `FN`, `FP`, `TN`, with `n1 = TP + FN`
-and `n0 = FP + TN`). Neither dataset contains individual patient data.
+and `n0 = FP + TN`). Neither dataset contains individual patient data. In the two IPG files the
+last column, `flag`, is the extraction-note column of `reconstruction/extract_ipg.py`; it is empty
+for every cohort (no manual intervention was needed).
 
 | File | Review | k | Source of the study-level numbers |
 |---|---|---|---|

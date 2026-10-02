@@ -18,4 +18,4 @@ design      the data-generating mechanism of the simulation study
 """
 from . import data, design, fitting, funnel, glmm, normal  # noqa: F401
 
-__version__ = "1.0.1"
+__version__ = "1.0.2"

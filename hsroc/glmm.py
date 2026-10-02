@@ -15,6 +15,8 @@ rule is applied.
 The HSROC reading of the fitted trends (shape lambda = sig_eta / sig_phi, latent accuracy and
 latent threshold trends, constrained fits and likelihood-ratio tests) is in ``fitting``.
 """
+import warnings
+
 import numpy as np
 from numpy.polynomial.hermite_e import hermegauss
 from scipy.optimize import minimize
@@ -147,11 +149,15 @@ def fit(TP, FN, FP, TN, x, start=None, hessian_step=HESSIAN_STEP_APPLICATIONS):
         V = np.linalg.inv(H)
     except np.linalg.LinAlgError:
         V = np.full((7, 7), np.nan)
+    hess_pd = bool(np.all(np.isfinite(H)) and np.all(np.linalg.eigvalsh((H + H.T) / 2) > 0))
+    if not hess_pd:
+        warnings.warn("the numerical Hessian at the optimum is not positive definite (a parameter at a bound, or a flat "
+                      "direction); the delta-method standard errors derived from V are not reliable", RuntimeWarning, stacklevel=2)
     mu_e, be, mu_f, bf, lse, lsf, t = th
     return dict(k=len(TP), mu_eta=float(mu_e), beta_eta=float(be), se_eta=float(np.sqrt(V[1, 1])),
                 mu_phi=float(mu_f), beta_phi=float(bf), se_phi=float(np.sqrt(V[3, 3])),
                 sig_e=float(np.exp(lse)), sig_f=float(np.exp(lsf)), rho=float(np.tanh(t)),
-                theta=th, V=V, nll=float(f0), converged=bool(res.success or res2.success))
+                theta=th, V=V, nll=float(f0), converged=bool(res.success or res2.success), hess_pd=hess_pd)
 
 
 def start_from_normal(normal_fit):

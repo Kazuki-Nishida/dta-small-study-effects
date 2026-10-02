@@ -2,8 +2,8 @@ cff-version: 1.2.0
 message: "If you use this code or these data, please cite the manuscript below."
 type: software
 title: "dta-small-study-effects: code, data and results for 'Small-study effects on the hierarchical summary ROC curve'"
-version: 1.0.1
-date-released: 2026-09-29
+version: 1.0.2
+date-released: 2026-10-02
 license: MIT
 repository-code: "https://github.com/Kazuki-Nishida/dta-small-study-effects"
 authors:

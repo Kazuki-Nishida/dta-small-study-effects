@@ -1,0 +1,9 @@
+# Exact versions of the environment that produced results/ and figures/ (Python 3.11.15; see README.md).
+# With these versions `make applications` and `make figures` reproduce the stored files byte for byte
+# (checked 2026-10-02). 33 of the 80 simulation settings were computed with numpy==2.2.6 and
+# scipy==1.15.3, as recorded in their summaries. Install with: pip install -r requirements-lock.txt
+numpy==2.4.4
+scipy==1.17.1
+pandas==3.0.2
+matplotlib==3.10.9
+pytest==9.1.1

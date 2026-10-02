@@ -16,7 +16,9 @@ threshold trend in residual SDs of the latent threshold per SD of size; delta is
 trend in latent-accuracy units per SD of size.  The order of the random draws is part of the
 specification: the seed of each setting (``analysis/simulation_settings.csv``) reproduces every
 replicate exactly, and the fits consume no random numbers, so the replicate data sets can be
-regenerated from the seeds alone.
+regenerated from the seeds alone.  Two numerical safeguards are part of the generator: the
+false-positive probability expit(phi_i) is clipped below at 1e-4 before the binomial draw, and the
+standardization of 1/sqrt(ESS_i) divides by max(SD, 1e-9).
 """
 import numpy as np
 

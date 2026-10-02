@@ -16,6 +16,8 @@ contrasts  : delta-method Wald tests of be - c bf at c = lam-hat (the accuracy c
              = lam^{1/2} g_alpha), c = -lam-hat (threshold) and c = 1 (the lnDOR axis)
 SAUC       : area under the summary curve  logit S(u) = lam logit u + lam^{1/2} alpha
 """
+import warnings
+
 import numpy as np
 from scipy.optimize import minimize
 from scipy.stats import chi2, t as tdist
@@ -24,6 +26,19 @@ from scipy.special import expit, logit
 from . import glmm
 
 BOUNDS6 = [(-30, 30), (-30, 30), (-200, 200), (-4, 3), (-4, 3), (-4, 4)]
+
+
+def _delta_se(g, V, what="a delta-method contrast"):
+    """Standard error sqrt(g' V g) of a delta-method contrast.  A variance that is not finite or
+    not positive (a covariance matrix from a Hessian that is not positive definite, or that could
+    not be inverted) gives NaN with a warning instead of a spuriously small standard error."""
+    var = float(g @ V @ g)
+    if not np.isfinite(var) or var <= 0:
+        warnings.warn(f"non-positive or non-finite delta-method variance ({var:.3g}) for {what}; "
+                      "the Hessian at the optimum is not positive definite, standard error and p value set to NaN",
+                      RuntimeWarning, stacklevel=3)
+        return float("nan")
+    return float(np.sqrt(var))
 
 
 def fit_fast(TP, FN, FP, TN, x, start, hessian_step=glmm.HESSIAN_STEP_SIMULATION):
@@ -55,8 +70,8 @@ def fit_fast(TP, FN, FP, TN, x, start, hessian_step=glmm.HESSIAN_STEP_SIMULATION
     def contrast(c, gvec):
         g = np.zeros(p); g[1] = 1.0; g[3] = -c; g = g - bf * gvec
         est = be - c * bf
-        se_ = np.sqrt(max(float(g @ V @ g), 1e-12))
-        return 2 * tdist.sf(abs(est / se_), k - 2)
+        se_ = _delta_se(g, V, f"the contrast beta_eta - {c:.3g} beta_phi")
+        return float(2 * tdist.sf(abs(est / se_), k - 2)) if np.isfinite(se_) else float("nan")
 
     return dict(p_hs=contrast(c_h, gc), p_c1=contrast(1.0, np.zeros(p)), c_h=c_h,
                 theta=th, nll=float(res.fun), converged=bool(res.success))
@@ -122,7 +137,9 @@ def hsroc_quantities(theta, V, k, x=None):
     tq = tdist.ppf(0.975, k - 2)
 
     def test(est, g):
-        se = float(np.sqrt(max(float(g @ V @ g), 1e-12)))
+        se = _delta_se(g, V, "an HSROC quantity")
+        if not np.isfinite(se):
+            return dict(est=float(est), se=se, p=float("nan"), ci=[float("nan"), float("nan")])
         return dict(est=float(est), se=se, p=float(2 * tdist.sf(abs(est / se), k - 2)),
                     ci=[float(est - tq * se), float(est + tq * se)])
 
@@ -141,7 +158,7 @@ def hsroc_quantities(theta, V, k, x=None):
     shape = test(lsf - lse, g)
     lam_ci = [float(np.exp(-shape["ci"][1])), float(np.exp(-shape["ci"][0]))]
     g = np.zeros(p); g[4] = lam; g[5] = -lam
-    lam_se = float(np.sqrt(max(float(g @ V @ g), 1e-12)))
+    lam_se = _delta_se(g, V, "the shape lambda")
     # latent trends
     l_m, l_p = lam ** -0.5, lam ** 0.5
     g = np.zeros(p); g[1] = l_m; g[3] = -l_p

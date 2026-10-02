@@ -7,6 +7,9 @@ from pathlib import Path
 import numpy as np
 import pandas as pd
 
+# The CSV files live in the repository's data/ directory, next to the package, and are not
+# installed with it: use the package from a clone (``pip install -e .`` or ``pip install -r
+# requirements.txt`` in the repository root).  A plain ``pip install .`` installs the code only.
 DATA_DIR = Path(__file__).resolve().parents[1] / "data"
 
 REVIEWS = {
@@ -26,6 +29,12 @@ def load_review(key):
         path = DATA_DIR / ENDPOINTS[key][0]
     else:
         path = Path(key)
+    if not path.exists():
+        hint = (f" The study-level tables are the CSV files of the repository's data/ directory (expected at "
+                f"{DATA_DIR}); they are not installed with the package. Run from a clone of the repository "
+                f"(pip install -e .), or pass the path of a CSV file with columns TP, FN, FP, TN."
+                if key in REVIEWS or key in ENDPOINTS else "")
+        raise FileNotFoundError(f"{path} not found.{hint}")
     d = pd.read_csv(path)
     return tuple(d[c].values.astype(int) for c in ("TP", "FN", "FP", "TN"))
 

@@ -43,7 +43,8 @@ def rate(cell, proc):
     f = os.path.join(SIM, f"{cell}.json")
     if not os.path.exists(f):
         return None
-    m = json.load(open(f))["methods"].get(proc)
+    with open(f) as fh:
+        m = json.load(fh)["methods"].get(proc)
     return float(m["rate"]) if m is not None and np.isfinite(m["rate"]) else None
 
 

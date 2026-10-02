@@ -57,6 +57,12 @@ pip install -e .          # or: pip install -r requirements.txt
 pytest -q                 # under a minute; refits both reviews and re-analyses stored simulation replicates
 ```
 
+Work from the clone: the study-level tables (`data/`) and the result files (`results/`) are
+repository directories next to the package and are not installed with it, so a plain
+`pip install .` gives a package that cannot find the data (`hsroc.data.load_review` says so).
+`requirements-lock.txt` pins the versions with which the stored results and figures were produced
+(`pip install -r requirements-lock.txt`), for an exact reproduction.
+
 The results in `results/` were produced with Python 3.11, NumPy 2.4.4 and SciPy 1.17.1 (33 of
 the 80 simulation settings with NumPy 2.2.6 and SciPy 1.15.3; each setting's summary records the
 versions used), single-threaded (`OPENBLAS_NUM_THREADS=1`, set by the scripts). All random
@@ -165,6 +171,15 @@ counts from the review's published data file, with a table of study characterist
 42 cohorts of the IPG review, reconstructed from the published per-cohort estimates and exact
 intervals of Goodacre et al. (2006) with the two extreme admissible reconstructions (minimum and
 maximum count) carried through the analysis.
+
+## Versions
+
+`v1.0.1` (2026-09-29) is the archive that accompanies the submitted manuscript; `v1.0.2`
+(2026-10-02) differs from it only in packaging and documentation (the package metadata, the
+pytest configuration, a clearer error when the data directory is missing, the missing
+`results/simulation_summary.csv`, docstrings, and a standard error that is now `NaN` with a
+warning rather than silently floored when a Hessian is not positive definite). No result file,
+data file or figure changed between the two.
 
 ## License and citation
 

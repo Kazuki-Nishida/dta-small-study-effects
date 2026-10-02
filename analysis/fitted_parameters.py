@@ -47,7 +47,8 @@ def main():
         print(f"{key}: k {r['k']} empty {r['n_empty']} lam {r['lam']:.3f} {[round(v,2) for v in r['lam_ci']]} rho {r['rho']:.3f} sig_alpha {r['sig_alpha']:.3f} sig_theta {r['sig_theta']:.3f} at_bound {r['bounds']['at_bound']} | "
               f"ga {r['gamma_alpha']['est']:+.2f} (SE {r['gamma_alpha']['se']:.2f}) p {r['lrt_alpha']['p_t']:.3f}; gt {r['gamma_theta']['est']:+.2f} p {r['lrt_theta']['p_t']:.3f}; c1 {r['betaA_1']['est']:+.2f} p {r['betaA_1']['p']:.3f}; "
               f"Deeks {r['deeks_slope']:+.2f} (SE {r['deeks_se']:.2f}) p {r['p_deeks']:.3f} | FPR {100*r['fpr_min']:.1f}-{100*r['fpr_max']:.1f}%")
-    json.dump(out, open(os.path.join(ROOT, "results", "fitted_parameters.json"), "w"), indent=1)
+    with open(os.path.join(ROOT, "results", "fitted_parameters.json"), "w") as fh:
+        json.dump(out, fh, indent=1)
 
 
 if __name__ == "__main__":

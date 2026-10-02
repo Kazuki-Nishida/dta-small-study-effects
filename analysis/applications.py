@@ -27,7 +27,7 @@ KEEP = ("lam", "lam_se", "lam_ci", "rho", "shape", "betaA_H", "betaA_1", "gamma_
 def analyse_review(csv):
     d = pd.read_csv(csv if os.path.isabs(csv) else os.path.join(DATA, csv))
     TP, FN, FP, TN = (d[c].values.astype(float) for c in ("TP", "FN", "FP", "TN"))
-    n1 = TP + FN; n0 = FP + TN; k = len(TP)
+    k = len(TP)
     ess, s = ess_s(TP, FN, FP, TN); x = s - s.mean()
     a = analyse(TP, FN, FP, TN, "smoothed")
     o = glmm.fit(TP, FN, FP, TN, x, start=glmm.start_from_normal(a["fit"]))
@@ -54,7 +54,10 @@ def analyse_review(csv):
 def main():
     out_path = os.path.join(RESULTS, "applications.json")
     only = sys.argv[1:]  # optional list of review keys to (re)compute; others are kept from the existing json
-    res = json.load(open(out_path)) if (only and os.path.exists(out_path)) else {}
+    res = {}
+    if only and os.path.exists(out_path):
+        with open(out_path) as fh:
+            res = json.load(fh)
     for key, csv_min, csv_max, label in REVIEWS:
         if only and key not in only:
             continue

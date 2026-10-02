@@ -44,7 +44,9 @@ def main(key="FIT"):
                 n_pa_below_10=int(sum(r["pa"] < .1 for r in rows)), n_pd_below_10=int(sum(r["pd"] < .1 for r in rows)),
                 pa_drop_largest=largest["pa"], pd_drop_largest=largest["pd"], dropped_largest=largest["omitted"],
                 pa_max_study=worst["omitted"], seconds=round(time.time() - t0))
-    out = os.path.join(RESULTS, f"applications_{key.lower()}_loo.json"); json.dump(summ, open(out, "w"), indent=1)
+    out = os.path.join(RESULTS, f"applications_{key.lower()}_loo.json")
+    with open(out, "w") as fh:
+        json.dump(summ, fh, indent=1)
     print(f"written {out}: accuracy test p<0.10 in {summ['n_pa_below_10']}/{len(rows)}, Deeks p<0.10 in {summ['n_pd_below_10']}/{len(rows)} [{summ['seconds']}s]")
 
 

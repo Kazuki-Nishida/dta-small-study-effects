@@ -1,0 +1,17 @@
+# Runs the test suite (pytest: smoke tests, refits of both reviews against results/applications.json,
+# re-analysis of stored simulation replicates) on every push and pull request.
+name: tests
+on: [push, pull_request]
+jobs:
+  pytest:
+    runs-on: ubuntu-latest
+    strategy:
+      matrix:
+        requirements: [requirements.txt, requirements-lock.txt]
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.11"
+      - run: pip install -r ${{ matrix.requirements }}
+      - run: pytest -q

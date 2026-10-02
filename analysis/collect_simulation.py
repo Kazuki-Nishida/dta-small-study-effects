@@ -19,14 +19,15 @@ def main():
     order = {c: i for i, c in enumerate(man["cell"])}
     rows = []
     for f in sorted(glob.glob(os.path.join(SIM, "*.json")), key=lambda p: order.get(os.path.basename(p)[:-5], 10 ** 6)):
-        c = json.load(open(f))
+        with open(f) as fh:
+            c = json.load(fh)
         base = dict(cell=c["cell"], block=c.get("block"), k=c["k"], rho=c["rho"], lam=c["lam"], lam_tag=c["lam_tag"],
                     rho_s=c["rho_s"], delta=c["delta"], seed=c["seed"], reps=c["reps"], sigma_alpha=c["sigma_alpha"], sigma_theta=c["sigma_theta"],
                     delta_over_sigma_alpha=c["delta_over_sigma_alpha"], b_dor=c["b_dor"], mean_s_sd=c["mean_s_sd"],
                     nonconverged_full=c["nonconverged_full"], nonconverged_null=c["nonconverged_null"], boundary_full=c["boundary_full"], boundary_t=c["boundary_t"],
                     boundary_sig=c["boundary_sig"], boundary_null=c["boundary_null"], hessian_not_invertible=c["hessian_not_invertible"], invalid_any=c["invalid_any"],
                     negative_lr=c["negative_lr"], min_lr_raw=c["min_lr_raw"], failed_replicates=c["failed_replicates"], mean_lam_hat=c["mean_lam_hat"],
-                    numpy=c.get("numpy"), scipy=c.get("scipy"), seconds=c.get("seconds"))
+                    python=c.get("python"), numpy=c.get("numpy"), scipy=c.get("scipy"), seconds=c.get("seconds"))
         for m, r in c["methods"].items():
             rows.append(dict(base, method=m, n_generated=r["n_generated"], n_valid=r["n_valid"], n_invalid=r["n_invalid"], n_reject=r["n_reject"],
                              rate=r["rate"], mcse=r["mcse"], rate_all_denominator=r["rate_all_denominator"]))

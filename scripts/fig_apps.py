@@ -5,7 +5,10 @@ ESS-weighted regression line of the Deeks test (solid) and the lnDOR trend of th
 (dashed; the same axis, the same likelihood as the proposed test); bottom, the accuracy coordinate
 eta_i - lam (phi_i - mu_phi) with the fitted latent accuracy trend.  Columns = the two reviews (FIT for colorectal
 cancer, IPG for DVT), each headed by the review's name, k and fitted shape.  Fitted lines and p values of the binomial
-fit from results/applications.json; the Deeks line is WLS on the data."""
+fit from results/applications.json; the Deeks line is WLS on the data.  In the lower panels the drawn line is the
+fitted trend of the accuracy coordinate, slope betaA_H = beta_eta - lam-hat beta_phi = lam-hat^{1/2} gamma_alpha per
+unit of s (supplement Section B), while the legend quotes gamma_alpha itself, the latent accuracy trend of Table 2;
+the two differ by the factor lam-hat^{1/2}."""
 import json, os
 import numpy as np
 import pandas as pd
@@ -21,7 +24,8 @@ plt.rcParams.update({"font.family": "sans-serif", "font.size": 9, "axes.edgecolo
                      "axes.labelcolor": INK2, "xtick.color": INK2, "ytick.color": INK2,
                      "axes.spines.top": False, "axes.spines.right": False,
                      "figure.facecolor": "white", "axes.facecolor": "white"})
-res = json.load(open(os.path.join(HERE, "..", "results", "applications.json")))
+with open(os.path.join(HERE, "..", "results", "applications.json")) as fh:
+    res = json.load(fh)
 CASES = [("Review 1: FIT for colorectal cancer", "FIT", "fit_crc_refpos.csv"), ("Review 2: IPG for DVT", "IPG", "ipg_min.csv")]
 
 

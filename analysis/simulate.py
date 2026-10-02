@@ -41,8 +41,11 @@ summary is results/simulation/<cell>.json; analysis/collect_simulation.py gather
 Usage: python analysis/simulate.py --cells 0:80 [--reps 1000] [--out results/simulation]
        python analysis/simulate.py --list
 Settings already summarised in the output folder are skipped (resumable).  Long runs can be split into time-budgeted
-chunks with --chunk CELL --budget SECONDS (part files, merged when complete; the random stream is identical)."""
-import os, sys, time, json, argparse
+chunks with --chunk CELL --budget SECONDS (part files, merged when complete; the random stream is identical).  The
+summary's `seconds` is the fitting time of a sequential run or the sum of the chunk times; in the 33 stored settings
+that were run in chunks before the chunk time was recorded, `seconds` is the duration of the merge step and is not
+meaningful (their `numpy`/`scipy` fields are those of the environment that ran the fits and the merge, see README.md)."""
+import os, sys, time, json, argparse, platform
 os.environ.setdefault("OPENBLAS_NUM_THREADS", "1"); os.environ.setdefault("OMP_NUM_THREADS", "1")
 import numpy as np, pandas as pd
 from scipy.optimize import minimize
@@ -145,15 +148,19 @@ def cell_params(row):
                 delta=float(row["delta"]), seed=int(row["seed"]))
 
 
-def finish_cell(df, data, row, lam, reps, seed, out_dir, t0, log):
+def finish_cell(df, data, row, lam, reps, seed, out_dir, t0, log, seconds=None):
+    """Write <cell>.npz and <cell>.json.  `seconds` is the fitting time; by default the time since t0, for a merged
+    setting the sum recorded in the part files (None when the parts predate that record)."""
     tag = row["cell"]
     os.makedirs(out_dir, exist_ok=True)
     np.savez_compressed(os.path.join(out_dir, f"{tag}.npz"), cell=tag, k=int(row["k"]), rho=float(row["rho"]), lam=lam, rho_s=float(row["rho_s"]),
                         delta=float(row["delta"]), seed=seed, reps=reps, **{nm: np.array(data[nm]) for nm in data}, **{c: df[c].values for c in df.columns if c != "error"})
     summ = summarise(df, row, lam, reps, seed)
-    summ["seconds"] = round(time.time() - t0); summ["numpy"] = np.__version__
+    summ["seconds"] = round(time.time() - t0) if seconds is None else seconds
+    summ["python"] = platform.python_version(); summ["numpy"] = np.__version__
     import scipy; summ["scipy"] = scipy.__version__
-    json.dump(summ, open(os.path.join(out_dir, f"{tag}.json"), "w"), indent=1)
+    with open(os.path.join(out_dir, f"{tag}.json"), "w") as fh:
+        json.dump(summ, fh, indent=1)
     log(f"{tag:34s} | " + " ".join(f"{m} {summ['methods'][m]['rate']:.3f}" for m in METHODS) +
         f" | lam-hat {summ['mean_lam_hat']:.2f} nonconv {summ['nonconverged_full']}/{summ['nonconverged_null']} bound {summ['boundary_full']} "
         f"negLR {summ['negative_lr']} invalid {summ['invalid_any']} [{summ['seconds']}s]")
@@ -184,7 +191,7 @@ def run_chunk(row, reps, out_dir, start, budget, log=print):
         return start - 1
     df = pd.DataFrame(recs); last = int(df["rep"].max())
     os.makedirs(out_dir, exist_ok=True)
-    np.savez_compressed(os.path.join(out_dir, f"{tag}.part_{start}-{last}.npz"), cell=tag, seed=P["seed"],
+    np.savez_compressed(os.path.join(out_dir, f"{tag}.part_{start}-{last}.npz"), cell=tag, seed=P["seed"], seconds=round(time.time() - t0),
                         **{nm: np.array(data[nm]) for nm in data}, **{c: df[c].values for c in df.columns if c != "error"})
     log(f"chunk {tag} {start}-{last} [{time.time() - t0:.0f}s]")
     return last
@@ -197,25 +204,31 @@ def merge_parts(row, reps, out_dir, log=print):
     parts = sorted(glob.glob(os.path.join(out_dir, f"{tag}.part_*.npz")), key=lambda f: int(re.search(r"part_(\d+)-", f).group(1)))
     if not parts:
         return False
-    frames = []; data = dict(TP=[], FN=[], FP=[], TN=[])
+    frames = []; data = dict(TP=[], FN=[], FP=[], TN=[]); part_seconds = []
     cols = [c for c in FAILED] + ["rep"]
     for f in parts:
-        z = np.load(f, allow_pickle=True)
-        d = {c: z[c] for c in cols if c in z.files}; frames.append(pd.DataFrame(d))
-        for nm in data:
-            data[nm].extend(list(z[nm]))
+        with np.load(f, allow_pickle=True) as z:
+            d = {c: z[c] for c in cols if c in z.files}; frames.append(pd.DataFrame(d))
+            for nm in data:
+                data[nm].extend(list(z[nm]))
+            if "seconds" in z.files:
+                part_seconds.append(int(z["seconds"]))
     df = pd.concat(frames).drop_duplicates("rep").sort_values("rep").reset_index(drop=True)
     have = set(df["rep"].astype(int)); missing = [r for r in range(1, reps + 1) if r not in have]
     if missing:
         log(f"{tag}: {len(have)} replicates in parts, missing {len(missing)} (next start {missing[0]})"); return False
     # data rows in the same order as df (parts may overlap after a resume)
-    reps_in_parts = np.concatenate([np.load(f, allow_pickle=True)["rep"] for f in parts]).astype(int)
+    def _reps(f):
+        with np.load(f, allow_pickle=True) as z:
+            return z["rep"]
+    reps_in_parts = np.concatenate([_reps(f) for f in parts]).astype(int)
     order = {}
     for i, rp in enumerate(reps_in_parts):
         order.setdefault(int(rp), i)
     idx = [order[r] for r in range(1, reps + 1)]
     data = {nm: [data[nm][i] for i in idx] for nm in data}
-    finish_cell(df, data, row, P["lam"], reps, P["seed"], out_dir, time.time(), log)
+    finish_cell(df, data, row, P["lam"], reps, P["seed"], out_dir, time.time(), log,
+                seconds=sum(part_seconds) if len(part_seconds) == len(parts) else None)
     return True
 
 
@@ -262,7 +275,7 @@ def summarise(df, row, lam, reps, seed):
         p = df[pcol[m]].values.astype(float); v = valid[m].values
         n_valid = int(v.sum()); n_rej = int(np.sum((p < ALPHA) & v)); rate = n_rej / n_valid if n_valid else float("nan")
         methods[m] = dict(n_generated=int(len(df)), n_valid=n_valid, n_invalid=int(len(df) - n_valid), n_reject=n_rej, rate=float(rate),
-                          rate_all_denominator=float(np.sum(np.nan_to_num(p, nan=1.0) < ALPHA) / len(df)),
+                          rate_all_denominator=float(n_rej / len(df)),   # all generated replicates as denominator; an invalid p value is no rejection
                           mcse=float(np.sqrt(rate * (1 - rate) / n_valid)) if n_valid else float("nan"))
     neg = df["lr_raw"].values.astype(float); neg_lr = int(np.sum(neg < -1e-6)); min_lr = float(np.nanmin(neg)) if np.isfinite(neg).any() else float("nan")
     out = dict(cell=row["cell"], block=row.get("block", ""), k=k, rho=rho, lam=float(lam), lam_tag=str(row["lam_tag"]),
@@ -272,7 +285,7 @@ def summarise(df, row, lam, reps, seed):
                boundary_sig=int((df["bound_lse"] | df["bound_lsf"]).sum()), boundary_beta=int(df["bound_beta"].sum()), boundary_null=int(df["bound_null"].sum()),
                hessian_not_invertible=int((~df["hess_ok"].astype(bool)).sum()), wald_hs_invalid=int((~df["ok_hs"].astype(bool)).sum()),
                wald_c1_invalid=int((~df["ok_c1"].astype(bool)).sum()), negative_lr=neg_lr, min_lr_raw=min_lr,
-               failed_replicates=int(df["error"].notna().sum()) if "error" in df else 0,
+               failed_replicates=int((df["status_full"].astype(int) == -1).sum()),
                invalid_any=int((~valid.all(axis=1)).sum()), mean_lam_hat=float(np.nanmean(df["lam_hat"])), median_lam_hat=float(np.nanmedian(df["lam_hat"])),
                methods=methods)
     return out

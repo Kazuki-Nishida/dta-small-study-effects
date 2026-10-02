@@ -5,9 +5,8 @@ Clopper-Pearson inversion; the minimum-count and maximum-count data sets (ipg_mi
 maximum within the twelve smallest (count, size) pairs of each coordinate, as in derive_ipg_max.py.
 Input: hta1015.txt and hta1015_raw.txt (see README.md); not distributed."""
 import re
-import numpy as np
 import pandas as pd
-from hta_text import solutions, load_years, cp_ci, pair_candidates, endpoints
+from hta_text import solutions, load_years, pair_candidates, endpoints
 
 TXT = "hta1015.txt"
 ROW = re.compile(r"^\s*(.+?)(\d{2,3})\s+([01][.,]\d{2})\s+\(([01][.,]\d{2}) to ([01][.,]\d{2})\)")
@@ -43,7 +42,7 @@ def main():
     for i, (se, sp) in enumerate(zip(se_rows, sp_rows)):
         s_se = solutions(se["p"], se["lo"], se["hi"])
         s_sp = solutions(sp["p"], sp["lo"], sp["hi"])
-        flag = ""
+        flag = ""      # extraction note column of the output tables; empty for every cohort (no manual intervention was needed)
         if not s_se or not s_sp:
             problems.append((se["author"], se["ref"], se if not s_se else sp, len(s_se), len(s_sp)))
             continue
